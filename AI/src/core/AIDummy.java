@@ -9,7 +9,6 @@ public class AIDummy extends AIBase {
 		super(localPort, gameAddress);
 		// TODO Auto-generated constructor stub
 	}
-
 	@Override
 	public void onNewState() {
 		// TODO Auto-generated method stub

@@ -38,14 +38,27 @@ public class Reciever extends Thread{
 				e.printStackTrace();
 			}
 			byte[] pos = rcv.getData();
-			int[] a = new int[rcv.getLength() / 4];
-			for (int i = 0; i < rcv.getLength() / 4; i++) {
-				for (int j = 0; j < 4; j++) {
-					a[i] += (pos[4 * i + j] & 0xff) << (8 * j);
+			// Om servern frågar skicka -1 först annars skicka data
+			if(pos[0] == 'D')// Servern frågar om du är död!
+			{
+				byte no = (byte)'N';
+				for(Updateable u:toUpdate){
+					
+					u.answer(no);//
 				}
 			}
-			for(Updateable u:toUpdate){
-				u.update(a);
+			else
+			{
+			//
+				int[] a = new int[rcv.getLength() / 4];
+				for (int i = 0; i < rcv.getLength() / 4; i++) {
+					for (int j = 0; j < 4; j++) {
+						a[i] += (pos[4 * i + j] & 0xff) << (8 * j);
+					}
+				}
+				for(Updateable u:toUpdate){
+					u.update(a);
+				}
 			}
 		}
 	}

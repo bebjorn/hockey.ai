@@ -18,6 +18,12 @@ public class Sender extends OrderList {
 		destination=gameAddress;
 		socket = sock;
 	}
+	public void answer(byte ans)throws IOException{
+		byte[] a = new byte[1];
+		a[0] = ans;
+		DatagramPacket data = new DatagramPacket(a,1,destination);
+		socket.send(data);
+	}
 	public void send() throws IOException{
 		
 		if(!isEmpty()){

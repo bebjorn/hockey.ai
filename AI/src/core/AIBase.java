@@ -54,14 +54,19 @@ public abstract class AIBase implements Updateable{
 		
 	}
 	@Override
-	/**
-	 * 
-	 */
-	public void update(int[] a) {
+	public void answer(byte n)
+	{
+		try {
+			sender.answer(n);
+		}
+		catch(IOException e){}
+	}
+	@Override
+	public void update(int[] a) {	
 		int i=0;
 		puck.setState(a[i++], a[i++]);
 		gameTime=a[i++];
-		
+	
 		//System.out.println(puck);
 //		for(int q=0;q<a.length;q++){
 //			System.out.print(a[q]);
@@ -81,7 +86,6 @@ public abstract class AIBase implements Updateable{
 			p.setState(a[i++], a[i++]);
 		}
 		onNewState();
-		
 	}
 	private DatagramSocket doHandshake(int localPort,SocketAddress gameAddress) throws IOException{
 		DatagramSocket socket;
