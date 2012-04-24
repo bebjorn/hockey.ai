@@ -1,4 +1,4 @@
-package util;
+package core;
 
 import java.awt.geom.Point2D;
 
@@ -35,13 +35,13 @@ public class Vector {
 	public double getX() {
 		return x;
 	}
-	public void setX(float x) {
-		this.x = x;
+	public void setX(double d) {
+		this.x = d;
 	}
 	public double getY() {
 		return y;
 	}
-	public void setY(float y) {
+	public void setY(double y) {
 		this.y = y;
 	}
 	public void multiplyInPlace(double m){
@@ -56,8 +56,7 @@ public class Vector {
 	}
 	public double shortestVectorDistance(Vector v){
 		//Vector v = new Vector(p.getX(),p.getY());
-		Vector w = this.multiply((this.dot(v)/this.norm()));
-		return (v.subtract(w)).norm();		
+		//Vector w = this.multiply((this.dot(v)/this.norm()));
+		return (v.subtract(this)).norm();		
 	}
-	
 }

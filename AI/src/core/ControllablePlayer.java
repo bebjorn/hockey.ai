@@ -2,15 +2,12 @@ package core;
 
 import java.awt.geom.Point2D;
 import java.io.IOException;
-
-import util.Vector;
 /**
  * Class for managing players in the own team
  * @author Anders Ryndel
  *
  */
 public class ControllablePlayer extends Player {
-	AIBase parent;
 	PrimitiveOrder order;
 	
 	private int targetPos=0;
@@ -42,21 +39,17 @@ public class ControllablePlayer extends Player {
 	public void setRotSpeed(int rotSpeed) {
 		this.rotSpeed = rotSpeed;
 	}
-	protected ControllablePlayer(int i,AIBase base) {
-		super(i,base,base.getTeam());
-		parent=base;
+	public ControllablePlayer(int i) {
+		super(i);
 		// TODO Auto-generated constructor stub
 	}
 	/**
 	 * Causes the player to turn to face the puck
 	 */
-	public void facePuck(){
-		lookAtAngle(getAngleToPuck());
-	}
 	/**
 	 * Causes the player to turn and move into position to stop and take control over the puck
 	 */
-	public PrimitiveOrder scootAndShoot(){
+	/*public PrimitiveOrder scootAndShoot(){
 		int closePos=(int)path.getInterceptPosition(new Vector(puck.getX(),puck.getY()));
 		if(Math.abs(getTargetPos()-closePos)>10){
 			
@@ -76,8 +69,8 @@ public class ControllablePlayer extends Player {
 				targetRot+=360;
 			}
 		}*/
-		return getOrder();
-	}
+		/*return getOrder();
+	}*/
 	/**
 	 * If the player is in control of the puck, this method will try to properly align the player to the puck and then turn to shoot it in the given direction.
 	 * @param angle - the angle in which the player attempts to shoot at.
@@ -138,9 +131,6 @@ public class ControllablePlayer extends Player {
 	protected PrimitiveOrder getOrder(){
 		return new PrimitiveOrder(id,transSpeed,targetPos,rotSpeed,targetRot);
 	}
-	public void sendOrder() throws IOException{
-		parent.addOrder(getOrder());
-		parent.send();
-	}
 	
 }
+
