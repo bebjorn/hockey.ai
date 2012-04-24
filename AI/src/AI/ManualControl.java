@@ -125,9 +125,11 @@ public class ManualControl extends AIBase implements KeyListener {
 	public static void main(String[] arg) throws IOException {
 		SocketAddress gameAddress = new InetSocketAddress("S2007", 60040);
 
-		ManualControl m = new ManualControl(60090, gameAddress);
+		//ManualControl m = 
+				new ManualControl(60090, gameAddress);
 
-		ManualControl d = new ManualControl(60089, gameAddress);
+		//ManualControl d = 
+				new ManualControl(60089, gameAddress);
 
 	}
 

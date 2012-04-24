@@ -4,8 +4,6 @@ package core;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 
-import util.Vector;
-
 public class PlayerPath {
 	double[] length;
 	double totalLength;

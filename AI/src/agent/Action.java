@@ -3,7 +3,7 @@ import java.util.ArrayList;
 import core.*;
 
 public class Action {
-	enum Act{
+	public enum Act{
 		Pass, Shoot, MoveWithPuck, CollectPuck, Move, NoOp, Start, NewGoal;
 	}
 	Player player1 = null, player2 = null;

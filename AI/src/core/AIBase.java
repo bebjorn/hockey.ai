@@ -20,8 +20,8 @@ public abstract class AIBase implements Updateable{
 	private Reciever reciever;
 	private Sender sender;
 	private Team team;
-	private LinkedList<ControllablePlayer> friendlyPlayers=new LinkedList<ControllablePlayer>();
-	private LinkedList<Player> opposingPlayers=new LinkedList<Player>();
+	private TeamOfPlayers friendlyPlayers=new TeamOfPlayers();
+	private TeamOfPlayers opposingPlayers=new TeamOfPlayers();
 	private Puck puck;
 	private int gameTime=0;
 	Date d=new Date();
@@ -45,8 +45,8 @@ public abstract class AIBase implements Updateable{
 			otherTeam=Team.HOME;
 		}
 		for(int i=0;i<6;i++){
-			friendlyPlayers.add(new ControllablePlayer(i,this));
-			opposingPlayers.add(new Player(i,this,otherTeam));
+			friendlyPlayers.add(new ControllablePlayer(i));
+			opposingPlayers.add(new Player(i,otherTeam));
 		}
 		System.out.println("handshakedone");
 		sender=new Sender(socket,gameAddress);
@@ -134,10 +134,10 @@ public abstract class AIBase implements Updateable{
 	public Team getTeam(){
 		return team;
 	}
-	public LinkedList<ControllablePlayer> getFriendlyPlayers(){
+	public TeamOfPlayers getFriendlyPlayers(){
 		return friendlyPlayers;
 	}
-	public LinkedList<Player> getOpposingPlayers(){
+	public TeamOfPlayers getOpposingPlayers(){
 		return opposingPlayers;
 	}
 	public abstract void onNewState();

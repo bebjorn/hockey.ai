@@ -1,7 +1,5 @@
 package core;
 
-import util.Vector;
-
 public class Puck extends Vector{
 	public Puck() {
 		super(0, 0);

@@ -237,7 +237,7 @@ public class Agent {
 			}
 			plan.remove(act);
 			//TEST
-			if (act.act.equals(Action.Act.Move) && act.player1.getLocation().shortestVectorDistance(puck) < AIDummy.CLUBREACH)
+			if (act.act.equals(Action.Act.Move) && act.player1.getLocation().shortestVectorDistance(puck) < PlanningAI.CLUBREACH)
 				act.act = Action.Act.MoveWithPuck;
 			//END TEST
 			return act; // the action should be executed.
@@ -374,7 +374,7 @@ public class Agent {
 			for(Player player: opposingPlayers)
 			{
 				if(player.canReachVector(move));
-					if((int)player.getLocation().shortestVectorDistance(move) < AIDummy.CLUBREACH)
+					if((int)player.getLocation().shortestVectorDistance(move) < PlanningAI.CLUBREACH)
 					{
 						return false;
 					}
