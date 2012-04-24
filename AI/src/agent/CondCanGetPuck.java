@@ -1,8 +1,6 @@
 package agent;
 
-import agent.Condition.Name;
 import core.Player;
-import core.Vector;
 
 public class CondCanGetPuck extends Condition {
 	Player player;

@@ -1,5 +1,4 @@
 package agent;
-import core.*;
 
 public abstract class Condition {
 	enum Name{

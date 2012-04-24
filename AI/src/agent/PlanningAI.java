@@ -1,20 +1,18 @@
 package agent;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Random;
 
-import AI.SimpleAI;
-import agent.*;
 import core.*;
 
 public class PlanningAI extends AIBase{
-	public static final int CLUBREACH = 20;
+	public static final int CLUBREACH = 20; // TODO: set it
+	private static final int eps = 5; // TODO: set it
 	private Team team;
 	private TeamOfPlayers friendlyPlayers= new TeamOfPlayers();
 	private TeamOfPlayers opposingPlayers= new TeamOfPlayers();
@@ -149,9 +147,12 @@ public class PlanningAI extends AIBase{
 	enum State {PLANNING, SHOOTING, PASSING, COLLECTINGPUCK, MOVING, MOVINGWITHPUCK;}
 	MainState mainState = MainState.ATTACKING;
 	State state = State.PLANNING;
+	int phase = 0;
+	int tmp = 0;
 	Action act;
 	
-	public void onNewState() {
+	@Override
+	public void onNewState()  {
 		
 		//getPassOrShotPos(new Action(Act.Shoot, friendlyPlayers.get(4), puck, new Vector(150, 150)));
 		
@@ -162,6 +163,7 @@ public class PlanningAI extends AIBase{
 		{
 			if(state.equals(State.PLANNING))
 			{
+				phase = 0;
 				act = new Action(Action.Act.NoOp);
 				if(agent.shoot.from == null)
 				{
@@ -211,7 +213,8 @@ public class PlanningAI extends AIBase{
 			}
 			else if(state.equals(State.MOVINGWITHPUCK))
 			{
-				
+				Date hej = new Date();
+				hej.getTime();
 				// 1. lägg puck tillrätta??
 				// 2. Åk mot destination med liten "innåtvinkel"
 				int i = 0;
@@ -255,6 +258,8 @@ public class PlanningAI extends AIBase{
 				// 2. placera spelaren
 				// 3. passa
 				
+				// 1:
+				
 				// 2:
 				act.player1.setState(getPassOrShotPos(act),0);
 				// 3: 
@@ -265,18 +270,61 @@ public class PlanningAI extends AIBase{
 			}
 			else if(state.equals(State.SHOOTING))
 			{
-				// 1. Lägg pucken tillrätta om det behövs??
-				// 2. placera spelaren
-				// 2. skut
-				//puck.setState((int)act.to.getX(), (int)act.to.getY()); // in goal
-				act.from = null; // ugly fix for detecting when we have a goal or not
-				state = State.PLANNING;
+				// 0. Lägg pucken tillrätta om det behövs??
+				// 1. placera spelaren
+				// 2. skjut
+				
+				// 0:
+				switch(phase)
+				{
+					case 0:
+						phase++;
+						break;
+					case 1:
+						tmp = getPassOrShotPos(act);
+						//skall även rotera ifrån pucken till en bra vinkel att skuta från
+						this.addOrder(new PrimitiveOrder(act.player1.getId(),50, tmp, 80, 0));
+						phase++;
+						break;
+					case 2:
+						if(Math.abs(act.player1.getCurrentPos() - tmp) < eps)
+							phase++;
+						break;
+					case 3:
+						this.addOrder(new PrimitiveOrder(act.player1.getId(),0, 0, 127, 0));
+						phase++;
+						break;
+					case 4:
+						act.from = null; // ugly fix for detecting when we have a goal or not
+						state = State.PLANNING;
+						phase++;
+						break;
+					default:
+						System.out.println("BAD!");
+						break;
+				}
 			}
-			try {Thread.sleep(1000);} catch(InterruptedException e) {}
 		}
-		
 		else if(mainState.equals(MainState.DEFENDING))
 		{
+			for(Iterator<Condition> iter = agent.current.effects.iterator(); iter.hasNext();)
+			{
+				Condition cond = iter.next();
+				if(cond.name.equals(Condition.Name.CanGetPuck))
+				{
+					Player player = ((CondHasPuck)cond).player;
+					
+					act = new Action(Action.Act.CollectPuck, player);
+					mainState = MainState.ATTACKING;
+					state = State.COLLECTINGPUCK;
+					return;
+				}
+			}
+			boolean faceFront = false;
+			if(puck.getY() <= 0) // 
+				faceFront = true;
+			
+			friendlyPlayers.get(0)
 		}
 		//ACT and update frame with action
 		/*if(act.act == Action.Act.Move)
@@ -333,6 +381,14 @@ public class PlanningAI extends AIBase{
 			puck.setState((int)act.player1.getLocation().getX(), (int)act.player1.getLocation().getY());
 		}*/
 		//frame.update(frame.getGraphics());
+		if(this.hasOrder())
+		{
+			try {
+				this.send();
+			}catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	private int getPassOrShotPos(Action act)
 	{

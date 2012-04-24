@@ -128,6 +128,9 @@ public abstract class AIBase implements Updateable{
 	public void addOrder(PrimitiveOrder order){
 		sender.add(order);
 	}
+	public boolean hasOrder(){
+		return sender.size() > 0;
+	}
 	public Puck getPuck(){
 		return puck;
 	}
