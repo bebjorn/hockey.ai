@@ -47,7 +47,7 @@ public class Player {
 			//failed
 		}
 	}
-	private void setState(int pos,int rot){
+	protected void setState(int pos,int rot){
 		this.currentRot=rot*360/255;
 		this.currentPos=pos;
 		//location=path.getCoordinate(pos);

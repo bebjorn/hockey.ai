@@ -12,12 +12,14 @@ import core.*;
 
 public class PlanningAI extends AIBase{
 	public static final int CLUBREACH = 20; // TODO: set it
-	private static final int eps = 5; // TODO: set it
+	private static final int epsPath = 5; // TODO: set it
+	private static final int epsCor = 5;  // TODO: set it
+	private static final int farFromLine = 5;  // TODO: set it
 	private Team team;
 	private TeamOfPlayers friendlyPlayers= new TeamOfPlayers();
 	private TeamOfPlayers opposingPlayers= new TeamOfPlayers();
 	private Puck puck;
-	private int gameTime=0;
+	private ShotData  shotData = new ShotData();
 	
 	private Agent agent;
 	Date d=new Date();
@@ -202,60 +204,104 @@ public class PlanningAI extends AIBase{
 			if(state.equals(State.MOVING))
 			{
 				// 1. åk till destination
-				int i = 0;
-				for(; i < 255; i++)
+				
+				switch(phase)
 				{
-					if(act.player1.path[i].equals(act.to))
+					case 0:
+						int i = 0;
+						for(; i < 255; i++)
+						{
+							if(act.player1.path[i].equals(act.to))
+								break;
+						}
+						this.addOrder(new PrimitiveOrder(act.player1.getId(),200,i,0,0));
+						phase++;
+						break;
+					case 1:
+						Vector dist = act.player1.getLocation().subtract(act.to);
+						if(dist.norm() < epsCor)
+							state = State.PLANNING;
+						break;
+					default:
+						System.out.println("Bad phase while moving!");
 						break;
 				}
-				act.player1.setState(i, 0);
-				state = State.PLANNING;
 			}
 			else if(state.equals(State.MOVINGWITHPUCK))
 			{
-				Date hej = new Date();
-				hej.getTime();
 				// 1. lägg puck tillrätta??
 				// 2. Åk mot destination med liten "innåtvinkel"
-				int i = 0;
-				for(; i < 256; i++)
+				switch(phase)
 				{
-					if(act.player1.path[i].equals(act.to))
+					case 0:
+						// lägg tillrätta puck.
+						break;
+					case 1:
+						// välj liten "inåttvinkel"
+						break;
+					case 2:
+						int i = 0;
+						for(; i < 255; i++)
+						{
+							if(act.player1.path[i].equals(act.to))
+								break;
+						}
+						this.addOrder(new PrimitiveOrder(act.player1.getId(),180,i,0,0));
+						phase++;
+						break;
+					case 3:
+						Vector dist = act.player1.getLocation().subtract(act.to);
+						if(dist.norm() < epsCor)
+							state = State.PLANNING;
+						break;
+					default:
+						System.out.println("Bad phase while moving!");
 						break;
 				}
-				act.player1.setState(i, 0);
-				
-				//puck.setState((int)act.player1.getLocation().getX(), (int)act.player1.getLocation().getY());
-				state = State.PLANNING;
 			}
 			else if(state.equals(State.COLLECTINGPUCK))
 			{
 				// 1. åk mot puck med liten "innåtvinkel"
-				int i = 1;
-				double xDiff = Math.abs((act.player1.path[0].getX()) - puck.getX());
-				double yDiff = Math.abs((act.player1.path[0].getY()) - puck.getY());
-				double oldDiff = yDiff+xDiff;
-				double diff = 0;
-				for(; i < 255; i++)
-				{	
-					xDiff = Math.abs((act.player1.path[i].getX()) - puck.getX());
-					yDiff = Math.abs((act.player1.path[i].getY()) - puck.getY());
-					diff = yDiff+xDiff;
-					if(diff >= oldDiff)
-					{
-						i--;
-						break;
-					}
-					oldDiff = diff;
-				}
 				
-				act.player1.setState(i, 0);
-				state = State.PLANNING;
+				switch(phase)
+				{
+					case 0:
+						// välj liten "inåttvinkel"
+						break;
+					case 1:
+						int i = 1;
+						double xDiff = Math.abs((act.player1.path[0].getX()) - puck.getX());
+						double yDiff = Math.abs((act.player1.path[0].getY()) - puck.getY());
+						double oldDiff = yDiff+xDiff;
+						double diff = 0;
+						for(; i < 255; i++)
+						{	
+							xDiff = Math.abs((act.player1.path[i].getX()) - puck.getX());
+							yDiff = Math.abs((act.player1.path[i].getY()) - puck.getY());
+							diff = yDiff+xDiff;
+							if(diff >= oldDiff)
+							{
+								i--;
+								break;
+							}
+							oldDiff = diff;
+						}
+						this.addOrder(new PrimitiveOrder(act.player1.getId(),180,i,0,0));
+						phase++;
+						break;
+					case 2:
+						if(act.player1.getLocation().shortestVectorDistance(puck) < CLUBREACH)
+							state = State.PLANNING;
+						break;
+					default:
+						System.out.println("Bad phase while CollectingPuck!");
+						break;
+				}
 			}
 			else if(state.equals(State.PASSING))
 			{
-				// 1. Lägg puck tillrätta om det behövs + vinkla motagare
-				// 2. placera spelaren
+				// 1. Lägg puck tillrätta om det behövs 
+				// 2. placera spelaren + vinkla motagare
 				// 3. passa
 				
 				// 1:
@@ -273,31 +319,52 @@ public class PlanningAI extends AIBase{
 				// 0. Lägg pucken tillrätta om det behövs??
 				// 1. placera spelaren
 				// 2. skjut
-				
-				// 0:
 				switch(phase)
 				{
 					case 0:
-						phase++;
+						shotData.calculateData(act, puck, team);
+						if(shotData.possible)
+							phase+=2;
+						else // need to move the puck.
+						{
+							if(act.player1.path[shotData.closestPos].subtract(puck).norm() < farFromLine)
+							{
+								// TODO: move puck away from line, closer to final destination
+							}
+							else
+							{
+								// TODO: simply move puck closer to the line
+							}
+							this.addOrder(new PrimitiveOrder(act.player1.getId(),0, 0, 20, 0));
+							phase++;
+						}
 						break;
 					case 1:
-						tmp = getPassOrShotPos(act);
-						//skall även rotera ifrån pucken till en bra vinkel att skuta från
-						this.addOrder(new PrimitiveOrder(act.player1.getId(),50, tmp, 80, 0));
-						phase++;
+						shotData.calculateData(act, puck, team);
+						if(shotData.possible)
+							phase++;
+						else
+						{
+							// maby move back to phase 1 after a nr of turns
+						}
 						break;
 					case 2:
-						if(Math.abs(act.player1.getCurrentPos() - tmp) < eps)
-							phase++;
+						//shotData.calculateData(act, puck, team);
+						//skall även rotera ifrån pucken till en bra vinkel att skuta från
+						this.addOrder(new PrimitiveOrder(act.player1.getId(),50, shotData.pos, 80, 0));
+						phase++;
 						break;
 					case 3:
+						if(Math.abs(act.player1.getCurrentPos() - tmp) < epsPath)
+							phase++;
+						break;
+					case 4:
 						this.addOrder(new PrimitiveOrder(act.player1.getId(),0, 0, 127, 0));
 						phase++;
 						break;
-					case 4:
+					case 5:
 						act.from = null; // ugly fix for detecting when we have a goal or not
 						state = State.PLANNING;
-						phase++;
 						break;
 					default:
 						System.out.println("BAD!");
@@ -390,70 +457,7 @@ public class PlanningAI extends AIBase{
 			}
 		}
 	}
-	private int getPassOrShotPos(Action act)
-	{
-		int i = 1;
-		Vector from = puck.subtract(act.to.subtract(act.from).multiply(/*TODO: puck radie*  */10/act.to.subtract(act.from).norm()));
-		double xDiff = Math.abs((act.player1.path[0].getX()) - from.getX()); // -puck
-		double yDiff = Math.abs((act.player1.path[0].getY()) - from.getY()); // -puck
-		double oldDiff = yDiff+xDiff;
-		double diff = 0;
-		for(; i < 255; i++)
-		{	
-			xDiff = Math.abs(act.player1.path[i].getX() - from.getX()); // -puck
-			yDiff = Math.abs(act.player1.path[i].getY() - from.getY()); // -puck
-			diff = yDiff+xDiff;
-			if(diff >= oldDiff)
-			{
-				i--;
-				break;
-			}
-			oldDiff = diff;
-		}
-		System.out.println("First: " + i);
-		
-		// Variables to account for:
-		// different teams
-		// different players
-		// puck.y over or under player path[i].y
-		// moving puck in positive or negative x direction
-		// (club is located slightly in front of player base)
-		
-		// - if the pass is close to 90 degrees in respect to the player path we may have to move the puck closer to the player path.
-		// - if the distance from the puck to the path[i] is very small and we do not wish to pass close to 90 degrees
-		//		we may have to move the puck slightly away from the path[i]
-		
-		// when oldDiff is smaller then 0 we need to inc i if home team and dec i if away team. 
-		int traverse = 0;
-		
-		from = puck.subtract(act.to.subtract(act.from).multiply(/*TODO: puck radie*  */5/act.to.subtract(act.from).norm()));
-		double far2 = act.to.subtract(from).normSquared();
-		double close2 = from.subtract(act.player1.path[i]).normSquared();
-		double hyp2 = act.to.subtract(act.player1.path[i]).normSquared();
-		oldDiff = far2+close2-hyp2;
-		if(team == Team.HOME)
-			traverse = (oldDiff < 0)? 1 : -1;
-		else
-			traverse = (oldDiff < 0)? -1 : 1;
-		oldDiff = Math.abs(oldDiff);
-		for(i = i+traverse; i > 0 && i < 255; i+=traverse)
-		{	
-			far2 = act.to.subtract(from).normSquared();
-			close2 = from.subtract(act.player1.path[i]).normSquared();
-			hyp2 = act.to.subtract(act.player1.path[i]).normSquared();
-			diff = Math.abs(far2+close2-hyp2);
-			if(diff >= oldDiff)
-			{
-				i-=traverse;
-				break;
-			}
-			oldDiff = diff;
-		}
-		System.out.println("Second: " + i);
-			
-		return gameTime;
-	}
-	public static void main(String[] arg) throws IOException {
+	public static void main(String[] arg) throws IOException{
 		SocketAddress gameAddress = new InetSocketAddress("S2007", 60040);
 
 		PlanningAI m = new PlanningAI(60090, gameAddress);
@@ -461,5 +465,4 @@ public class PlanningAI extends AIBase{
 		PlanningAI d = new PlanningAI(60089, gameAddress);
 
 	}
-	
 }
