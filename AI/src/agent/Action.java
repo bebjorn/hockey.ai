@@ -2,6 +2,11 @@ package agent;
 import java.util.ArrayList;
 import core.*;
 
+/**
+ * A Action represent someting the agent can do.
+ * @author Björn Berntsson
+ *
+ */
 public class Action {
 	public enum Act{
 		Pass, Shoot, MoveWithPuck, CollectPuck, Move, NoOp, Start, NewGoal;
@@ -11,7 +16,13 @@ public class Action {
 	Act act = null;
 	boolean boundPassPlayer = true;
 	boolean boundPassFromPos = true;
+	/**
+	 * The conditions witch needs to be true before the action can be executed
+	 */
 	public ArrayList<Condition> preconditions = new ArrayList<Condition>();
+	/**
+	 * The conditions that taking this action will generate. 
+	 */
 	public ArrayList<Condition> effects = new ArrayList<Condition>();
 	
 	public Action(Act act)//noOp, Start, Finish    maybe remove Finish

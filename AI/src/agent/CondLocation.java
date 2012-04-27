@@ -3,6 +3,10 @@ package agent;
 import core.Player;
 import core.Vector;
 
+/**
+ * A Condition representing where a player is located.
+ * @author Björn Berntsson
+ */
 public class CondLocation extends Condition {
 	Player player;
 	Vector point;

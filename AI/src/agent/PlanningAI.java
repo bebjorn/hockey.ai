@@ -10,8 +10,14 @@ import java.util.Random;
 
 import core.*;
 
+/**
+ * The class that plans and execute actions for the hockey game.
+ * @author Björn Berntsson
+ */
 public class PlanningAI extends AIBase{
+	
 	public static final int CLUBREACH = 20; // TODO: set it
+	public static final int PUCKRADIUS = 10; // TODO: set it
 	private static final int epsPath = 5; // TODO: set it
 	private static final int epsCor = 5;  // TODO: set it
 	private static final int farFromLine = 5;  // TODO: set it
@@ -24,8 +30,8 @@ public class PlanningAI extends AIBase{
 	private Agent agent;
 	Date d=new Date();
 	/**
-	 * Creates and initaializes basic AI functionality and connects it to the game at the selected adress
-	 * @param gameAddress 
+	 * A Planning AI that plans and execute actions for the hockey game.
+	 * @param gameAddress
 	 * @param port 
 	 * @param localPort
 	 * @param gameAddress
@@ -47,8 +53,6 @@ public class PlanningAI extends AIBase{
 			friendlyPlayers.add(new ControllablePlayer(i));
 			opposingPlayers.add(new Player(i,otherTeam));
 		}
-		opposingPlayers.get(0).setState(110, 0);
-		opposingPlayers.get(2).setState(80, 0);
 		/*Table table = new Table(getFriendlyPlayers(), getOpposingPlayers(), getPuck());
 		frame = new Frame();
 		frame.add(table);*/
@@ -229,12 +233,11 @@ public class PlanningAI extends AIBase{
 			}
 			else if(state.equals(State.MOVINGWITHPUCK))
 			{
-				// 1. lägg puck tillrätta??
+				// 1. åk "bakom" puck med klubban "ur vägen"
 				// 2. Åk mot destination med liten "innåtvinkel"
 				switch(phase)
 				{
 					case 0:
-						// lägg tillrätta puck.
 						break;
 					case 1:
 						// välj liten "inåttvinkel"
@@ -262,7 +265,7 @@ public class PlanningAI extends AIBase{
 			else if(state.equals(State.COLLECTINGPUCK))
 			{
 				// 1. åk mot puck med liten "innåtvinkel"
-				
+				// TODO Om det finns tid, dra in pucken närmare vår egen linje så ingen motståndare når den.
 				switch(phase)
 				{
 					case 0:
@@ -304,12 +307,7 @@ public class PlanningAI extends AIBase{
 				// 2. placera spelaren + vinkla motagare
 				// 3. passa
 				
-				// 1:
 				
-				// 2:
-				act.player1.setState(getPassOrShotPos(act),0);
-				// 3: 
-				act.player1.setState(act.player1.getCurrentPos(), 100);
 				//puck.setState((int)act.player2.getLocation().getX(), (int)act.player2.getLocation().getY());
 				
 				state = State.PLANNING;
@@ -334,8 +332,12 @@ public class PlanningAI extends AIBase{
 							else
 							{
 								// TODO: simply move puck closer to the line
+								// turn clockwise
+								int dir = 1; //TODO What is clockWise + or -? different for the teams??
+								if(shotData.clockwise)
+									dir = -1;
+								this.addOrder(new PrimitiveOrder(act.player1.getId(),100, shotData.closestPos, dir, 0));
 							}
-							this.addOrder(new PrimitiveOrder(act.player1.getId(),0, 0, 20, 0));
 							phase++;
 						}
 						break;
@@ -363,7 +365,7 @@ public class PlanningAI extends AIBase{
 						phase++;
 						break;
 					case 5:
-						act.from = null; // ugly fix for detecting when we have a goal or not
+						act.from = null; // ugly way of detecting when we have a goal or not
 						state = State.PLANNING;
 						break;
 					default:
@@ -391,7 +393,7 @@ public class PlanningAI extends AIBase{
 			if(puck.getY() <= 0) // 
 				faceFront = true;
 			
-			friendlyPlayers.get(0)
+			friendlyPlayers.get(0);
 		}
 		//ACT and update frame with action
 		/*if(act.act == Action.Act.Move)

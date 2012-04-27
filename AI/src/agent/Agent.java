@@ -10,19 +10,36 @@ import core.TeamOfPlayers;
 import core.Vector;
 
 
+/**
+ * Agent plans attacks.
+ * @author Björn Berntsson
+ */
 public class Agent {
-	// the actions in the plan
+	/**
+	 *  The actions in the plan
+	 */
 	ArrayList<Action> plan = new ArrayList<Action>();
-	// The ordering constraints between the actions
+	/**
+	 *  The ordering constraints between the actions
+	 */
 	ArrayList<Orderingconstraint> orderingConstraints = new ArrayList<Orderingconstraint>();
-	// the casual links between the actions
+	/**
+	 *  The casual links between the actions
+	 */
 	ArrayList<CausalLink> causalLinks = new ArrayList<CausalLink>();
-	// the Conditions of the actions witch are not yet met.
+	/**
+	 *  The Conditions of the actions witch are not yet met.
+	 */
 	ArrayList<Condition> openConditions = new ArrayList<Condition>();
 	
 	
-	
+	/**
+	 * The Action that contain the current state of the "real" world.
+	 */
 	public Action current;
+	/**
+	 * The Action that represents the goal that the agent will try to reach.
+	 */
 	public Action shoot;
 	Puck puck;
 	private TeamOfPlayers friendlyPlayers;
@@ -53,6 +70,10 @@ public class Agent {
 		openConditions.addAll(shoot.preconditions);
 	}
 	//-------remove flaw, maybe give a action.--------
+	/**
+	 * Refines the plan by doing one of several different steps.
+	 * @return A noOp Action or the next action to take
+	 */
 	public Action Continuous_Pop_Agent()
 	{
 		Action action = new Action(Action.Act.NoOp);

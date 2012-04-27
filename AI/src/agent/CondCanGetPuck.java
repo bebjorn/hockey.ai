@@ -1,7 +1,10 @@
 package agent;
 
 import core.Player;
-
+/**
+ * A condition indicating that player has the puck within his area.
+ * @author Björn Berntsson
+ */
 public class CondCanGetPuck extends Condition {
 	Player player;
 	public CondCanGetPuck(Player player, Action action) // CanGetPuck or HasPuck

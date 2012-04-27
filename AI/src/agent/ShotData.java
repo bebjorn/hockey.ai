@@ -4,19 +4,50 @@ import core.Puck;
 import core.Team;
 import core.Vector;
 
+/**
+ * A class containing the data necessary to make a shot.
+ * @author Bear
+ */
 public class ShotData {
+	/**
+	 * The position on the players path that is closest to the puck
+	 */
 	public int closestPos;
+	/**
+	 * The position on the players path from witch the player should fire
+	 */
 	public int pos;
-	public boolean clockWise;
-	public boolean possible;
+	/**
+	 * The angle from witch the player should start his shoot
+	 */
+	public int fromAngle;
+	/**
+	 * If the player should turn clockwise or not
+	 */
+	public boolean clockwise;
+	/**
+	 * Whether the shot can be made. If not pos is to far away from the puck
+	 */
+	public boolean possible; 
+	/**
+	 * Whether the puck has a larger or smaller y coordinate then the player.
+	 */
+	public boolean puckAbovePlayer; //TODO Set it in calculateData or remove it
 	public ShotData()
 	{
 		
 	}
+	/**
+	 * @param act
+	 * The pass or shoot to make
+	 * @param puck
+	 * @param team
+	 * @return returns this instance of ShotData now changed by the call
+	 */
 	public ShotData calculateData(Action act, Puck puck, Team team)
 	{
 		int i = 1;
-		Vector from = puck.subtract(act.to.subtract(act.from).multiply(/*TODO: puck radie*  */10/act.to.subtract(act.from).norm()));
+		Vector from = puck.subtract(act.to.subtract(act.from).multiply(PlanningAI.PUCKRADIUS/act.to.subtract(act.from).norm()));
 		double xDiff = Math.abs((act.player1.path[0].getX()) - from.getX()); // -puck
 		double yDiff = Math.abs((act.player1.path[0].getY()) - from.getY()); // -puck
 		double oldDiff = yDiff+xDiff;
@@ -50,7 +81,7 @@ public class ShotData {
 		// when oldDiff is smaller then 0 we need to inc i if home team and dec i if away team. 
 		int traverse = 0;
 		
-		from = puck.subtract(act.to.subtract(act.from).multiply(/*TODO: puck radie*  */5/act.to.subtract(act.from).norm()));
+		from = puck.subtract(act.to.subtract(act.from).multiply(PlanningAI.PUCKRADIUS/act.to.subtract(act.from).norm()));
 		double far2 = act.to.subtract(from).normSquared();
 		double close2 = from.subtract(act.player1.path[i]).normSquared();
 		double hyp2 = act.to.subtract(act.player1.path[i]).normSquared();
@@ -82,53 +113,54 @@ public class ShotData {
 		else
 			this.possible = true;
 		// end possible
-		// set clockWise
+		// set clockwise and maybe fromAngle
+		// TODO: Set fromAngle
 		Vector fromSubTo = act.from.subtract(act.to);
 		if(fromSubTo.getX() < 0 && fromSubTo.getY() < 0) // to is right and below of from
 		{
 			if(from.getX() > act.player1.path[pos].getX()) // Puck is right of player
 			{
-				clockWise = true;
+				clockwise = true;
 			}
 			else
 			{
-				clockWise = false;
+				clockwise = false;
 			}
 		}
 		else if(fromSubTo.getX() < 0 && fromSubTo.getY() >= 0) // to is right and above of from
 		{
 			if(from.getX() > act.player1.path[pos].getX()) // Puck is right of player
 			{
-				clockWise = false;
+				clockwise = false;
 			}
 			else
 			{
-				clockWise = true;
+				clockwise = true;
 			}
 		}
 		else if(fromSubTo.getX() >= 0 && fromSubTo.getY() < 0) // to is left and below of from
 		{
 			if(from.getX() > act.player1.path[pos].getX()) // Puck is right of player
 			{
-				clockWise = true;
+				clockwise = true;
 			}
 			else
 			{
-				clockWise = false;
+				clockwise = false;
 			}
 		}
 		else if(fromSubTo.getX() >= 0 && fromSubTo.getY() >= 0) // to is left and above of from
 		{
 			if(from.getX() > act.player1.path[pos].getX()) // Puck is right of player
 			{
-				clockWise = false;
+				clockwise = false;
 			}
 			else
 			{
-				clockWise = true;
+				clockwise = true;
 			}
 		}
-		// end clockWise
+		// end clockwise
 		return this;
 	}
 	

@@ -1,7 +1,18 @@
 package agent;
 
+/**
+ * A Orderingconstraint reprecesents the fact that and action must happen before another.
+ * @author Björn Berntsson
+ */
 public class Orderingconstraint {
-	Action before, after;
+	/**
+	 * Must happen before "after".
+	 */
+	Action before;
+	/**
+	 * Must happen after "before".
+	 */
+	Action after;
 	public Orderingconstraint(Action before, Action after)
 	{
 		this.before = before;
