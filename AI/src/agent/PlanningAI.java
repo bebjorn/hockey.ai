@@ -375,18 +375,156 @@ public class PlanningAI extends AIBase{
 			}
 			else if(state.equals(State.PASSING))
 			{
-				// TODO: 1. Lägg puck tillrätta om det behövs 
-				// 2. placera spelaren + vinkla motagare
-				// 3. passa
-				
-				
-				//puck.setState((int)act.player2.getLocation().getX(), (int)act.player2.getLocation().getY());
-				
-				state = State.PLANNING;
+				switch(phase)
+				{
+					case 0: // check if the puck has a good position
+						shotData.calculateData(act, puck, team);
+						if(shotData.possible)
+							phase+=2;
+						else // need to move the puck.
+						{
+							// TODO: check this part, maybe also use player.y < 0 to set dir ??
+							// move puck away from line, closer to final destination
+							if(act.player1.path[shotData.closestPos].subtract(puck).norm() < farFromLine)
+							{
+								
+								int dir = 0;
+								if(act.player1.getLocation().getX() > puck.getX()) // player is to the right of puck;
+								{
+									dir = -1;
+									angleDest = team.equals(Team.HOME) ? 123 : 250;
+								}
+								else
+								{
+									dir = 1;
+									angleDest = team.equals(Team.HOME) ? 5 : 133;
+								}
+								// TODO: may need to increase speed for short rotations
+								this.addOrder(new PrimitiveOrder(act.player1.getId(),0, 0, dir*20, angleDest));
+							}
+							else
+							{
+								// TODO: move puck closer to the line
+								// turn clockwise
+								int dir = 1;
+								if(act.player1.getLocation().getX() > puck.getX()) // player is to the right of puck;
+								{
+									if(act.player1.getLocation().getY() > puck.getY())//puck above player
+									{
+										dir = 1;
+										angleDest = team.equals(Team.HOME) ? 96 : 224;
+									}
+									else
+									{
+										dir = -1;
+										angleDest = team.equals(Team.HOME) ? 160 : 32;
+									}
+								}
+								else
+								{
+									if(act.player1.getLocation().getY() > puck.getY())
+									{
+										dir = -1;
+										angleDest = team.equals(Team.HOME) ? 32 : 160;
+									}
+									else
+									{
+										dir = 1;
+										angleDest = team.equals(Team.HOME) ? 224 : 96;
+									}
+								}
+								
+								this.addOrder(new PrimitiveOrder(act.player1.getId(),0, 0, dir*70, angleDest));
+							}
+							phase++;
+						}
+						break;
+					/*WE MAY NEED THIS case 1: 
+						if(Math.abs(act.player1.getCurrentRot()-angleDest) < epsRot) // dålig runt nollan?
+							phase++;
+						break;*/
+					case 1:
+						shotData.calculateData(act, puck, team);
+						if(shotData.possible)
+							phase++;
+						else
+						{
+							phaseStuckCount++;
+							if (phaseStuckCount > 50)
+							{
+								phaseStuckCount = 0;
+								state = State.PLANNING; // TODO: plan or go to phase1 ???
+							}
+						}
+						break;
+					case 2: //skall även rotera ifrån pucken till en bra vinkel att skjuta ifrån
+						//shotData.calculateData(act, puck, team);
+						int dir;
+						if(act.player1.getCurrentRot() > shotData.fromAngle)
+						{
+							if(act.player1.getCurrentRot()-shotData.fromAngle > 128)
+								dir = 1; //anti-clock
+							else
+								dir = -1; // clock
+						}
+						else
+						{
+							if(shotData.fromAngle - act.player1.getCurrentRot() > 128)
+								dir = -1; //anti-clock
+							else
+								dir = 1; // clock
+						}
+						int i = 0;
+						for(; i < act.player2.path.length; i++)
+						{
+							if(act.player1.path[i].equals(act.to))
+								break;
+						}
+						i = i < 5 ? 0: i-5;
+						
+						this.addOrder(new PrimitiveOrder(act.player2.getId(), 200, i, 120, 0));
+						this.addOrder(new PrimitiveOrder(act.player1.getId(),50, shotData.pos, dir*127, shotData.fromAngle));
+						phase++;
+						break;
+					case 3:
+						if(Math.abs(act.player1.getCurrentPos() - tmp) < epsPath)
+							phase++;
+						break;
+					case 4:
+						int rotDest = shotData.fromAngle + shotData.clockwise*-32; // almost one complete turn
+						this.addOrder(new PrimitiveOrder(act.player1.getId(),0, 0, shotData.clockwise*127, rotDest));
+						phase++;
+						break;
+					case 5: // wait a few turns before trying to plan more
+						phaseStuckCount++;
+						if(phaseStuckCount > 10) // TODO: Tune this constant or use some time constant instead
+						{
+							act.from = null; // ugly way of detecting when we have a goal(for the plan) or not
+							state = State.PLANNING;
+							phaseStuckCount = 0;
+						}
+						break;
+					default:
+						System.out.println("BAD!");
+						break;
+				}
 			}
 			else if(state.equals(State.SHOOTING))
 			{
-				// TODO: 0. Lägg pucken tillrätta om det behövs?? case 0 and 1
+				boolean stop = true;
+				for(Iterator<Condition> iter = agent.current.effects.iterator(); iter.hasNext();)
+				{
+					Condition cond = iter.next();
+					if(cond.name.equals(Condition.Name.CanGetPuck) && ((CondCanGetPuck)cond).player.equals(act.player1))
+					{						
+						stop = false;
+						break;
+					}
+				}
+				if (stop)
+				{
+					mainState = MainState.DEFENDING;
+				}
 				switch(phase)
 				{
 					case 0: // check if the puck has a good position
