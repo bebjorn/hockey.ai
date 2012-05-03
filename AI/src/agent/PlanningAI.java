@@ -20,12 +20,16 @@ public class PlanningAI extends AIBase{
 	public static final int PUCKRADIUS = 10; // TODO: set it
 	private static final int epsPath = 5; // TODO: set it
 	private static final int epsCor = 5;  // TODO: set it
+	private static final int epsRot = 5;  // TODO: set it
 	private static final int farFromLine = 5;  // TODO: set it
 	private Team team;
 	private TeamOfPlayers friendlyPlayers= new TeamOfPlayers();
 	private TeamOfPlayers opposingPlayers= new TeamOfPlayers();
 	private Puck puck;
 	private ShotData  shotData = new ShotData();
+	private int moveDest = 0; // saves the destination of move orders
+	private int angleDest = 0; // saves the angleDestination of rotaion orders
+	private int phaseStuckCount = 0;
 	
 	private Agent agent;
 	Date d=new Date();
@@ -206,9 +210,7 @@ public class PlanningAI extends AIBase{
 					state = State.SHOOTING;
 			}
 			if(state.equals(State.MOVING))
-			{
-				// 1. åk till destination
-				
+			{				
 				switch(phase)
 				{
 					case 0:
@@ -233,26 +235,85 @@ public class PlanningAI extends AIBase{
 			}
 			else if(state.equals(State.MOVINGWITHPUCK))
 			{
-				// 1. åk "bakom" puck med klubban "ur vägen"
-				// 2. Åk mot destination med liten "innåtvinkel"
 				switch(phase)
 				{
 					case 0:
+						//moving left, puck on the right
+						
+						if (act.to.getX() < act.from.getX() && act.from.getX() < puck.getX())
+						{
+							angleDest = team.equals(Team.HOME) ? 128 : 0;
+							this.addOrder(new PrimitiveOrder(act.player1.getId(),180,angleDest,0,0));
+							phase++;
+						}
+						else if(act.to.getX() > act.from.getX() && act.from.getX() > puck.getX())
+						{
+							angleDest = team.equals(Team.HOME) ? 0 : 128;
+							this.addOrder(new PrimitiveOrder(act.player1.getId(),180,angleDest,0,0));
+							phase++;
+						}
+						else // we do not need to go behind puck
+						{
+							phase+=4;
+						}
 						break;
 					case 1:
-						// välj liten "inåttvinkel"
+						if(Math.abs(act.player1.getCurrentRot()-angleDest) < epsRot) // dålig runt nollan?
+							phase++;
 						break;
 					case 2:
+						boolean left = false; // moving "right" : towards away team
+						if (act.to.getX() < act.from.getX()) // moving "left"
+						{
+							left = true;
+						}
 						int i = 0;
 						for(; i < 255; i++)
 						{
-							if(act.player1.path[i].equals(act.to))
+							if(act.player1.path[i].equals(act.from))
 								break;
 						}
-						this.addOrder(new PrimitiveOrder(act.player1.getId(),180,i,0,0));
+						if(team.equals(Team.HOME))
+						{
+							i = left ? i-10: i+10;
+						}
+						else
+							i = left ? i+10: i-10;
+						i = i<0 ? 0:i;
+						i = i>255 ? 255:i;
+						moveDest = i;
+						this.addOrder(new PrimitiveOrder(act.player1.getId(),180,i,0,0));// move behind
 						phase++;
 						break;
 					case 3:
+						if(Math.abs(act.player1.getCurrentPos()-moveDest) < epsPath)
+							phase++;
+					case 4: //TODO: may want to and or remove a few degrees based on left or right traveling to get an inward angle
+						angleDest = 64;
+						if(act.player1.getLocation().getY() < puck.getY())// puck below player
+							if(team.equals(Team.HOME))
+								angleDest = 192;
+						if(act.player1.getLocation().getY() >= puck.getY())// puck above player
+							if(team.equals(Team.AWAY))
+								angleDest = 192;
+						this.addOrder(new PrimitiveOrder(act.player1.getId(),0,0,60,angleDest));// rotate into pos
+						phase++;
+						break;
+					case 5:
+						if(Math.abs(act.player1.getCurrentRot()-angleDest) < epsRot) // dålig runt nollan?
+							phase++;
+						break;
+					case 6:
+						int j = 0;
+						for(; j < 255; j++)
+						{
+							if(act.player1.path[j].equals(act.to))
+								break;
+						}
+						this.addOrder(new PrimitiveOrder(act.player1.getId(),180,j,0,0));
+						phase++;
+						break;
+					case 7:
 						Vector dist = act.player1.getLocation().subtract(act.to);
 						if(dist.norm() < epsCor)
 							state = State.PLANNING;
@@ -264,14 +325,25 @@ public class PlanningAI extends AIBase{
 			}
 			else if(state.equals(State.COLLECTINGPUCK))
 			{
-				// 1. åk mot puck med liten "innåtvinkel"
-				// TODO Om det finns tid, dra in pucken närmare vår egen linje så ingen motståndare når den.
+				// TODO: Om det finns tid, dra in pucken närmare vår egen linje så ingen motståndare når den.
 				switch(phase)
 				{
-					case 0:
-						// välj liten "inåttvinkel"
+					case 0: //TODO: may want to and or remove a few degrees based on left or right traveling
+						angleDest = 64;
+						if(act.player1.getLocation().getY() < puck.getY())// puck below player
+							if(team.equals(Team.HOME))
+								angleDest = 192;
+						if(act.player1.getLocation().getY() >= puck.getY())// puck above player
+							if(team.equals(Team.AWAY))
+								angleDest = 192;
+						this.addOrder(new PrimitiveOrder(act.player1.getId(),0,0,60,angleDest));// rotate into pos
+						phase++;
 						break;
 					case 1:
+						if(Math.abs(act.player1.getCurrentRot()-angleDest) < epsRot) // dålig runt nollan?
+							phase++;
+						break;
+					case 2:
 						int i = 1;
 						double xDiff = Math.abs((act.player1.path[0].getX()) - puck.getX());
 						double yDiff = Math.abs((act.player1.path[0].getY()) - puck.getY());
@@ -292,7 +364,7 @@ public class PlanningAI extends AIBase{
 						this.addOrder(new PrimitiveOrder(act.player1.getId(),180,i,0,0));
 						phase++;
 						break;
-					case 2:
+					case 3:
 						if(act.player1.getLocation().shortestVectorDistance(puck) < CLUBREACH)
 							state = State.PLANNING;
 						break;
@@ -303,7 +375,7 @@ public class PlanningAI extends AIBase{
 			}
 			else if(state.equals(State.PASSING))
 			{
-				// 1. Lägg puck tillrätta om det behövs 
+				// TODO: 1. Lägg puck tillrätta om det behövs 
 				// 2. placera spelaren + vinkla motagare
 				// 3. passa
 				
@@ -314,46 +386,107 @@ public class PlanningAI extends AIBase{
 			}
 			else if(state.equals(State.SHOOTING))
 			{
-				// 0. Lägg pucken tillrätta om det behövs??
-				// 1. placera spelaren
-				// 2. skjut
+				// TODO: 0. Lägg pucken tillrätta om det behövs?? case 0 and 1
 				switch(phase)
 				{
-					case 0:
+					case 0: // check if the puck has a good position
 						shotData.calculateData(act, puck, team);
 						if(shotData.possible)
 							phase+=2;
 						else // need to move the puck.
 						{
+							// TODO: check this part, maybe also use player.y < 0 to set dir ??
+							// move puck away from line, closer to final destination
 							if(act.player1.path[shotData.closestPos].subtract(puck).norm() < farFromLine)
 							{
-								// TODO: move puck away from line, closer to final destination
+								
+								int dir = 0;
+								if(act.player1.getLocation().getX() > puck.getX()) // player is to the right of puck;
+								{
+									dir = -1;
+									angleDest = team.equals(Team.HOME) ? 123 : 250;
+								}
+								else
+								{
+									dir = 1;
+									angleDest = team.equals(Team.HOME) ? 5 : 133;
+								}
+								// TODO: may need to increase speed for short rotations
+								this.addOrder(new PrimitiveOrder(act.player1.getId(),0, 0, dir*20, angleDest));
 							}
 							else
 							{
-								// TODO: simply move puck closer to the line
+								// TODO: move puck closer to the line
 								// turn clockwise
-								int dir = 1; //TODO What is clockWise + or -? different for the teams??
-								if(shotData.clockwise)
-									dir = -1;
-								this.addOrder(new PrimitiveOrder(act.player1.getId(),100, shotData.closestPos, dir, 0));
+								int dir = 1;
+								if(act.player1.getLocation().getX() > puck.getX()) // player is to the right of puck;
+								{
+									if(act.player1.getLocation().getY() > puck.getY())//puck above player
+									{
+										dir = 1;
+										angleDest = team.equals(Team.HOME) ? 96 : 224;
+									}
+									else
+									{
+										dir = -1;
+										angleDest = team.equals(Team.HOME) ? 160 : 32;
+									}
+								}
+								else
+								{
+									if(act.player1.getLocation().getY() > puck.getY())
+									{
+										dir = -1;
+										angleDest = team.equals(Team.HOME) ? 32 : 160;
+									}
+									else
+									{
+										dir = 1;
+										angleDest = team.equals(Team.HOME) ? 224 : 96;
+									}
+								}
+								
+								this.addOrder(new PrimitiveOrder(act.player1.getId(),0, 0, dir*70, angleDest));
 							}
 							phase++;
 						}
 						break;
+					/*WE MAY NEED THIS case 1: 
+						if(Math.abs(act.player1.getCurrentRot()-angleDest) < epsRot) // dålig runt nollan?
+							phase++;
+						break;*/
 					case 1:
 						shotData.calculateData(act, puck, team);
 						if(shotData.possible)
 							phase++;
 						else
 						{
-							// maby move back to phase 1 after a nr of turns
+							phaseStuckCount++;
+							if (phaseStuckCount > 50)
+							{
+								phaseStuckCount = 0;
+								state = State.PLANNING; // TODO: plan or go to phase1 ???
+							}
 						}
 						break;
-					case 2:
+					case 2: //skall även rotera ifrån pucken till en bra vinkel att skjuta ifrån
 						//shotData.calculateData(act, puck, team);
-						//skall även rotera ifrån pucken till en bra vinkel att skuta från
-						this.addOrder(new PrimitiveOrder(act.player1.getId(),50, shotData.pos, 80, 0));
+						int dir;
+						if(act.player1.getCurrentRot() > shotData.fromAngle)
+						{
+							if(act.player1.getCurrentRot()-shotData.fromAngle > 128)
+								dir = 1; //anti-clock
+							else
+								dir = -1; // clock
+						}
+						else
+						{
+							if(shotData.fromAngle - act.player1.getCurrentRot() > 128)
+								dir = -1; //anti-clock
+							else
+								dir = 1; // clock
+						}
+						this.addOrder(new PrimitiveOrder(act.player1.getId(),50, shotData.pos, dir*127, shotData.fromAngle));
 						phase++;
 						break;
 					case 3:
@@ -361,12 +494,18 @@ public class PlanningAI extends AIBase{
 							phase++;
 						break;
 					case 4:
-						this.addOrder(new PrimitiveOrder(act.player1.getId(),0, 0, 127, 0));
+						int rotDest = shotData.fromAngle + shotData.clockwise*-32; // almost one complete turn
+						this.addOrder(new PrimitiveOrder(act.player1.getId(),0, 0, shotData.clockwise*127, rotDest));
 						phase++;
 						break;
-					case 5:
-						act.from = null; // ugly way of detecting when we have a goal or not
-						state = State.PLANNING;
+					case 5: // wait a few turns before trying to plan more
+						phaseStuckCount++;
+						if(phaseStuckCount > 10) // TODO: Tune this constant or use some time constant instead
+						{
+							act.from = null; // ugly way of detecting when we have a goal(for the plan) or not
+							state = State.PLANNING;
+							phaseStuckCount = 0;
+						}
 						break;
 					default:
 						System.out.println("BAD!");

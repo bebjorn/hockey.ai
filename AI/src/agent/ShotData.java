@@ -14,30 +14,31 @@ public class ShotData {
 	 */
 	public int closestPos;
 	/**
-	 * The position on the players path from witch the player should fire
+	 * The position on the players path from witch the player should shoot
 	 */
 	public int pos;
 	/**
-	 * The angle from witch the player should start his shoot
+	 * The angle from witch the player should make his shoot
 	 */
 	public int fromAngle;
 	/**
-	 * If the player should turn clockwise or not
+	 * If the player should turn clockwise or not, -1 if clockwise 1 if anti clockwise
 	 */
-	public boolean clockwise;
+	public int clockwise;
 	/**
 	 * Whether the shot can be made. If not pos is to far away from the puck
 	 */
 	public boolean possible; 
 	/**
-	 * Whether the puck has a larger or smaller y coordinate then the player.
+	 * Whether the puck has a larger or smaller y coordinate then the player, at the time of the shoot.
 	 */
-	public boolean puckAbovePlayer; //TODO Set it in calculateData or remove it
+	//public boolean puckAbovePlayer; //TODO Set it in calculateData or remove it
 	public ShotData()
 	{
 		
 	}
 	/**
+	 * Calculates the data for the given pass or shot
 	 * @param act
 	 * The pass or shoot to make
 	 * @param puck
@@ -113,55 +114,70 @@ public class ShotData {
 		else
 			this.possible = true;
 		// end possible
-		// set clockwise and maybe fromAngle
-		// TODO: Set fromAngle
+		// set clockwise and fromAngle
 		Vector fromSubTo = act.from.subtract(act.to);
 		if(fromSubTo.getX() < 0 && fromSubTo.getY() < 0) // to is right and below of from
 		{
 			if(from.getX() > act.player1.path[pos].getX()) // Puck is right of player
 			{
-				clockwise = true;
+				fromAngle = 0;
+				clockwise = -1;
+				
 			}
 			else
 			{
-				clockwise = false;
+				fromAngle = 128;
+				clockwise = 1;
 			}
 		}
 		else if(fromSubTo.getX() < 0 && fromSubTo.getY() >= 0) // to is right and above of from
 		{
 			if(from.getX() > act.player1.path[pos].getX()) // Puck is right of player
 			{
-				clockwise = false;
+				fromAngle = 0;
+				clockwise = 1;
 			}
 			else
 			{
-				clockwise = true;
+				fromAngle = 128;
+				clockwise = -1;
 			}
 		}
 		else if(fromSubTo.getX() >= 0 && fromSubTo.getY() < 0) // to is left and below of from
 		{
 			if(from.getX() > act.player1.path[pos].getX()) // Puck is right of player
 			{
-				clockwise = true;
+				fromAngle = 0;
+				clockwise = -1;
 			}
 			else
 			{
-				clockwise = false;
+				fromAngle = 128;
+				clockwise = 1;
 			}
 		}
 		else if(fromSubTo.getX() >= 0 && fromSubTo.getY() >= 0) // to is left and above of from
 		{
 			if(from.getX() > act.player1.path[pos].getX()) // Puck is right of player
 			{
-				clockwise = false;
+				fromAngle = 0;
+				clockwise = 1;
 			}
 			else
 			{
-				clockwise = true;
+				fromAngle = 128;
+				clockwise = -1;
 			}
 		}
-		// end clockwise
+		if(team.equals(Team.AWAY))
+		{
+			fromAngle = (fromAngle + 128) % 256;
+		}
+		// end clockwise and fromAngle
+
+		
+		//TODO: acount for backhand and forehand not being centered on the player
+			
 		return this;
-	}
-	
+	}	
 }
